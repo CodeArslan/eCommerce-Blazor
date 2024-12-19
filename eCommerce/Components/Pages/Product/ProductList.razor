@@ -1,0 +1,110 @@
+﻿@page "/Product"
+@using System.Globalization
+@inject IProductRepository _ProductRepository
+@inject IJSRuntime _JS
+<BootstrapModal OnModalConfirmation="ConfirmDelete_Click"
+BootstrapButtonType="btn-danger"
+ButtonText="Delete"
+Title="Are you sure you want to delete Product?"
+>
+</BootstrapModal>
+@if (IsProcessing)
+{
+    <div class="position-absolute w-75 h-75 d-flex flex-column align-items-center bg-white justify-content-center">
+        <img src="/images/Loader.gif" alt="loading" />
+    </div>
+}
+else
+{
+    <div class="card shadow border-0 mt-4">
+        <div class="card-header bg-black bg-gradient ml-0 py-3">
+            <div class="row">
+                <div class="col-12 text-center">
+                    <h2 class="text-white py-2">Product List</h2>
+                </div>
+            </div>
+        </div>
+        <div class="card-body p-4">
+            <div class="row pb-3">
+                <div class="col-12 text-end">
+                    <a href="Product/Create" class="btn btn-secondary btn-lg"><i class="bi bi-plus-square"></i> Add</a>
+                </div>
+            </div>
+            @if(Products.Any())
+            {
+                <table class="table table-bordered table-striped">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Price</th>
+                            <th>Special Tag</th>
+                            <th>Category</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var pro in Products)
+                        {
+                            <tr>
+                                <td>@pro.Name</td>
+                                <td>@pro.Price.ToString("C",CultureInfo.GetCultureInfo("en-US"))</td>
+                                <td>@pro.SpecialTag</td>
+                                <td>@pro.Category.Name</td>
+                                <td>
+                                    <a href="@($"Product/Update/{pro.Id}")" class="btn btn-primary"><i class="bi bi-pencil-square"></i> Edit</a>
+                                    <button class="btn btn-danger" @onclick="()=>HandleDelete(pro.Id)"><i class="bi bi-pencil-square"></i> Delete</button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+
+        </div>
+    </div>
+}
+
+@code {
+    public bool IsProcessing = true;
+    private IEnumerable<Product> Products { get; set; } = new List<Product>();
+    private int ProductCategoryId { get; set; } = 0;
+
+   
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if(firstRender)
+        {
+            await LoadCategories();
+            IsProcessing = false;
+            StateHasChanged();
+        }
+    }
+    private async Task LoadCategories()
+    {
+        Products = await _ProductRepository.GetAllAsync();
+    }
+
+    private void HandleDelete(int Id)
+    {
+        ProductCategoryId = Id;
+        _JS.InvokeVoidAsync("ShowConfirmationModal");
+    }
+
+    private async Task ConfirmDelete_Click(bool IsConfirmed)
+    {
+        IsProcessing = true;
+        await _JS.InvokeVoidAsync("HideConfirmationModal");
+        if (IsConfirmed && ProductCategoryId != 0)
+        {
+            var result = await _ProductRepository.DeleteAsync(ProductCategoryId);
+            if(result)
+                _JS?.ToastrSuccess("Category Deleted Succesfully");
+            else
+                _JS?.ToastrError("Category Deleted Succesfully");
+
+                await LoadCategories();
+        }
+        ProductCategoryId = 0;
+        IsProcessing = false;
+    }
+}
