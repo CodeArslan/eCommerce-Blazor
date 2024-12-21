@@ -6,10 +6,12 @@
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.AspNetCore.WebUtilities
 @using eCommerce.Data
+@using eCommerce.Utility
 
 @inject UserManager<ApplicationUser> UserManager
 @inject IUserStore<ApplicationUser> UserStore
 @inject SignInManager<ApplicationUser> SignInManager
+@inject RoleManager<IdentityRole> RoleManager
 @inject IEmailSender<ApplicationUser> EmailSender
 @inject ILogger<Register> Logger
 @inject NavigationManager NavigationManager
@@ -17,42 +19,54 @@
 
 <PageTitle>Register</PageTitle>
 
-<h1>Register</h1>
-
-<div class="row">
-    <div class="col-lg-6">
-        <StatusMessage Message="@Message" />
-        <EditForm Model="Input" asp-route-returnUrl="@ReturnUrl" method="post" OnValidSubmit="RegisterUser" FormName="register">
-            <DataAnnotationsValidator />
-            <h2>Create a new account.</h2>
-            <hr />
-            <ValidationSummary class="text-danger" role="alert" />
-            <div class="form-floating mb-3">
-                <InputText @bind-Value="Input.Email" id="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="name@example.com" />
-                <label for="Input.Email">Email</label>
-                <ValidationMessage For="() => Input.Email" class="text-danger" />
+<div class="mt-5" style="height: 100%">
+    <div class="h-100 d-flex justify-content-center align-items-center">
+        <div class="card bg-light" style="min-width:28rem">
+            <div class="card-body">
+                <h5 class="card-title text-center display-6">Sign Up</h5>
+                <StatusMessage Message="@Message" />
+                <EditForm Model="Input" asp-route-returnUrl="@ReturnUrl" method="post" OnValidSubmit="RegisterUser" FormName="register">
+                    <DataAnnotationsValidator />
+                    <hr />
+                    <ValidationSummary class="text-danger" role="alert" />
+                    <div class="form-floating mb-3">
+                        <InputText @bind-Value="Input.Email" id="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="name@example.com" />
+                        <label for="Input.Email">Email</label>
+                        <ValidationMessage For="() => Input.Email" class="text-danger" />
+                    </div>
+                    <div class="form-floating mb-3">
+                        <InputText type="password" @bind-Value="Input.Password" id="Input.Password" class="form-control" autocomplete="new-password" aria-required="true" placeholder="password" />
+                        <label for="Input.Password">Password</label>
+                        <ValidationMessage For="() => Input.Password" class="text-danger" />
+                    </div>
+                    <div class="form-floating mb-3">
+                        <InputText type="password" @bind-Value="Input.ConfirmPassword" id="Input.ConfirmPassword" class="form-control" autocomplete="new-password" aria-required="true" placeholder="password" />
+                        <label for="Input.ConfirmPassword">Confirm Password</label>
+                        <ValidationMessage For="() => Input.ConfirmPassword" class="text-danger" />
+                    </div>
+                    <div class="form-floating mb-3">
+                        <InputSelect @bind-Value="Input.Role" class="form-select">
+                            <option value="@StaticDetails.Role_Customer" selected>@StaticDetails.Role_Customer</option>
+                            <option value="@StaticDetails.Role_Admin">@StaticDetails.Role_Admin</option>
+                        </InputSelect>
+                        <label for="">Select Role</label>
+                        <ValidationMessage For="() => Input.Role" class="text-danger" />
+                    </div>
+                    <button type="submit" class="w-100 btn btn-lg btn-primary">Register</button>
+                </EditForm>
+                <br />
+                <ExternalLoginPicker />
+                <hr />
+                <p class="text-center mt-2">
+                    <small class="text-muted text-center">
+                        Already have an account? <a href="Account/Login">Log in</a>
+                    </small>
+                </p>
             </div>
-            <div class="form-floating mb-3">
-                <InputText type="password" @bind-Value="Input.Password" id="Input.Password" class="form-control" autocomplete="new-password" aria-required="true" placeholder="password" />
-                <label for="Input.Password">Password</label>
-                <ValidationMessage For="() => Input.Password" class="text-danger" />
-            </div>
-            <div class="form-floating mb-3">
-                <InputText type="password" @bind-Value="Input.ConfirmPassword" id="Input.ConfirmPassword" class="form-control" autocomplete="new-password" aria-required="true" placeholder="password" />
-                <label for="Input.ConfirmPassword">Confirm Password</label>
-                <ValidationMessage For="() => Input.ConfirmPassword" class="text-danger" />
-            </div>
-            <button type="submit" class="w-100 btn btn-lg btn-primary">Register</button>
-        </EditForm>
-    </div>
-    <div class="col-lg-4 col-lg-offset-2">
-        <section>
-            <h3>Use another service to register.</h3>
-            <hr />
-            <ExternalLoginPicker />
-        </section>
+        </div>
     </div>
 </div>
+
 
 @code {
     private IEnumerable<IdentityError>? identityErrors;
@@ -79,6 +93,14 @@
             identityErrors = result.Errors;
             return;
         }
+        if(Input.Role is not null)
+        {
+            if (!await RoleManager.RoleExistsAsync(Input.Role))
+            {
+                await RoleManager.CreateAsync(new IdentityRole(Input.Role));
+            }
+            await UserManager.AddToRoleAsync(user, Input.Role);
+        }
 
         Logger.LogInformation("User created a new account with password.");
 
@@ -93,9 +115,17 @@
 
         if (UserManager.Options.SignIn.RequireConfirmedAccount)
         {
-            RedirectManager.RedirectTo(
-                "Account/RegisterConfirmation",
-                new() { ["email"] = Input.Email, ["returnUrl"] = ReturnUrl });
+
+            //try catch to ignore on going issue with blazor
+            @try{
+                RedirectManager.RedirectTo(
+               "Account/RegisterConfirmation",
+               new() { ["email"] = Input.Email, ["returnUrl"] = ReturnUrl });
+            }
+            catch{
+
+            }
+           
         }
 
         await SignInManager.SignInAsync(user, isPersistent: false);
@@ -141,5 +171,7 @@
         [Display(Name = "Confirm password")]
         [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
         public string ConfirmPassword { get; set; } = "";
+
+        public string? Role{ get; set; }
     }
 }
