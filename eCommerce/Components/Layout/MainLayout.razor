@@ -1,14 +1,22 @@
-﻿@inherits LayoutComponentBase
-
+﻿@using eCommerce.Utility
+@inherits LayoutComponentBase
+@inject AuthenticationStateProvider AuthenticationStateProvider
 <div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
 
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
+    <AuthorizeView Roles="@StaticDetails.Role_Admin">
+        <div class="sidebar">
+            <NavMenu />
         </div>
+    </AuthorizeView>
+    <main>
+        @if(_NavbarVisibility)
+        {
+            <NavBar></NavBar>
+        }
+
+        @*  <div class="top-row px-4">
+            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
+        </div> *@
 
         <article class="content px-4">
             @Body
@@ -21,3 +29,30 @@
     <a href="." class="reload">Reload</a>
     <span class="dismiss">🗙</span>
 </div>
+@code{
+    private bool _NavbarVisibility;
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        _NavbarVisibility = await ShowNavbar();
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        _NavbarVisibility = await ShowNavbar();
+    }
+
+    private async Task<bool> ShowNavbar(){
+        var AuthState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var User = AuthState.User;
+        var Authenticated = User.Identity is not null && User.Identity.IsAuthenticated;
+        if(!Authenticated){
+            return true;
+        }
+        if(!User.IsInRole(StaticDetails.Role_Admin))
+        {
+            return true;
+        }
+        return false;
+    }
+
+
+}

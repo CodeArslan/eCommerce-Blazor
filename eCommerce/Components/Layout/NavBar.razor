@@ -1,0 +1,55 @@
+﻿<nav class="navbar navbar-expand-sm navbar-dark bg-dark">
+    <div class="container-fluid">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse"
+                aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarCollapse">
+            <!-- Left-aligned Navbar Links -->
+            <ul class="navbar-nav me-auto">
+                <li class="">
+                    <NavLink class="nav-link" href="#">
+                        <span class="bi bi-house-door me-2" aria-hidden="true"></span>Home
+                    </NavLink>
+                </li>
+            </ul>
+
+            <!-- Right-aligned Navbar Items -->
+            <ul class="navbar-nav mb-2 mb-md-0 d-flex align-items-center">
+                <AuthorizeView>
+                    <Authorized>
+                        <li class="nav-item">
+                            <button class="nav-link active me-2" style="cursor:pointer; background:transparent; border:none;">
+                                Welcome, <span class="ms-1">@context?.User?.Identity?.Name</span>
+                            </button>
+                        </li>
+                        <li class="">
+                            <form action="Account/Logout" method="post">
+                                <AntiforgeryToken />
+                                <input type="hidden" name="ReturnUrl" value="" />
+                                <button type="submit" class="nav-link btn btn-success d-flex align-items-center">
+                                    <span class="bi bi-arrow-bar-left me-2" aria-hidden="true"></span>Logout
+                                </button>
+                            </form>
+                        </li>
+                    </Authorized>
+                    <NotAuthorized>
+                        <li class="">
+                            <NavLink class="nav-link" href="Account/Register">
+                                <span class="bi bi-person me-2" aria-hidden="true"></span>Register
+                            </NavLink>
+                        </li>
+                        <li class="nav-link">
+                            <NavLink class="nav-link" href="Account/Login">
+                                <span class="bi bi-person-badge me-2" aria-hidden="true"></span>Login
+                            </NavLink>
+                        </li>
+                    </NotAuthorized>
+                </AuthorizeView>
+                
+               
+            </ul>
+        </div>
+    </div>
+</nav>
