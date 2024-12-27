@@ -8,7 +8,8 @@ namespace eCommerce.Data
         public int Id { get; set; }
         [Required]
         public string Name { get; set; }
-        [Range(0.01, 1000)]
+        [Range(0.01, 1000, ErrorMessage = "Price must be between 0.01 and 1000.")]
+        [Column(TypeName = "decimal(18,2)")]
         public decimal Price { get; set; }
         public string? Description { get; set; }
         public string? SpecialTag { get; set; }
