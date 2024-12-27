@@ -1,32 +1,33 @@
 ﻿@page "/"
 @inject IProductRepository _ProductRepository
+@inject ICategoryRepository _CategoryRepository
 
 <PageTitle>Home</PageTitle>
 <style>
     .card-img-fixed {
-        width: 150px; 
-        height: 150px; 
-        object-fit: cover; 
+    width: 150px; 
+    height: 150px; 
+    object-fit: cover; 
     }
 
     .card-fixed-height {
-        height: 350px;
-        display: flex;
-        flex-direction: column; 
-        justify-content: space-between; 
+    height: 350px;
+    display: flex;
+    flex-direction: column; 
+    justify-content: space-between; 
     }
 
     .card-body {
-        overflow: hidden; 
+    overflow: hidden; 
     }
 
     .card-text {
-        overflow: hidden; 
-        text-overflow: ellipsis; 
-        display: -webkit-box; 
-        -webkit-line-clamp: 3; 
-        -webkit-box-orient: vertical; 
-        white-space: normal; 
+    overflow: hidden; 
+    text-overflow: ellipsis; 
+    display: -webkit-box; 
+    -webkit-line-clamp: 3; 
+    -webkit-box-orient: vertical; 
+    white-space: normal; 
     }
 </style>
 
@@ -42,8 +43,8 @@ else{
         <div class="jumbotron-custom">
             <div class="m-auto d-flex align-items-center" style="width: 400px; height: 50vh;">
                 <div class="d-flex align-items-center" style="width: 100%;">
-                    <input type="text" class="form-control rounded-pill"
-                    placeholder="Search for Food Items!"
+                    <input type="text" class="form-control rounded-pill" @bind:event="oninput" @bind:get="_SearchText"
+                    @bind:set="FilterProductByName"  placeholder="Search for Food Items!"
                     style="width: 100%; padding: 20px;">
                     <span style="position: relative; left: -43px;"><i class="bi bi-search"></i></span>
                 </div>
@@ -52,18 +53,18 @@ else{
         <div class="content px-4 m-2">
             <ul class="nav nav-underline justify-content-center mb-2">
                 <li class="nav-item">
-                    <span class="nav-link" href="#" style="cursor: pointer">All</span>
+                    <span class="nav-link @GetActiveClass(0)" href="#" style="cursor: pointer" @onclick="()=>FilterProducts(0)">All</span>
                 </li>
-                <li class="nav-item">
-                    <span class="nav-link" href="#" style="cursor: pointer">Cat 1</span>
-                </li>
-                <li class="nav-item">
-                    <span class="nav-link" href="#" style="cursor: pointer">Cat 2</span>
-                </li>
+                @foreach(var cat in Categories)
+                {
+                    <li class="nav-item">
+                        <span class="nav-link @GetActiveClass(cat.Id)" href="#" style="cursor: pointer" @onclick="()=>FilterProducts(cat.Id)">@cat.Name</span>
+                    </li>
+                }
             </ul>
 
             <div class="row mt-4 mx-1">
-                @foreach(var prod in Products)
+                @foreach(var prod in FilteredProducts)
                 {
                     <div class="col-12 col-md-6 col-lg-4 pe−3 mb-5">
                         <div class="card card-fixed-height">
@@ -85,15 +86,15 @@ else{
                                 else{
                                     <img class="card-img-fixed img-thumbnail img-rounded mt-2" src="images/products/default.jpg" style="">
                                 }
-                                
+
                             </div>
                             <div class="card-body">
                                 <h5 class="card-title text-center lead text-success">@prod.Name</h5>
-                               
+
                                 <h4 class="text-center">
                                     <i class="bi bi-cart3 btn btn-success text-right px-5 form-control">Add to cart</i>
                                 </h4>
-                              @*   <p class="card-text mt-2">@((MarkupString)prod.Description)</p> *@
+                                @*   <p class="card-text mt-2">@((MarkupString)prod.Description)</p> *@
                             </div>
                         </div>
                     </div>
@@ -105,18 +106,56 @@ else{
 @code{
     public bool IsProcessing = true;
     private IEnumerable<eCommerce.Data.Product> Products = new List<eCommerce.Data.Product>();
+    private IEnumerable<eCommerce.Data.Product> FilteredProducts = new List<eCommerce.Data.Product>();
+    private IEnumerable<eCommerce.Data.Category> Categories { get; set; } = new List<eCommerce.Data.Category>();
 
+    private int _SelectedCategoryId = 0;
+    public string _SearchText = "";
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            await LoadProducts();
+            await LoadProductsandCategories();
             IsProcessing = false;
             StateHasChanged();
         }
     }
-    private async Task LoadProducts()
+    private async Task LoadProductsandCategories()
     {
         Products = await _ProductRepository.GetAllAsync();
+        Categories = await _CategoryRepository.GetAllAsync();
+        FilterProducts(0);
+    }
+
+    private void FilterProducts(int catId)
+    {
+        if(catId == 0)
+        {
+            FilteredProducts = Products;
+            _SelectedCategoryId = catId;
+            return;
+        }
+        else{
+            FilteredProducts = Products.Where(n => n.CategoryId==catId).ToList();
+            _SelectedCategoryId = catId;
+            _SearchText = String.Empty;
+            return;
+        }
+    }
+    private void FilterProductByName(string name)
+    {
+        if (!string.IsNullOrWhiteSpace(name))
+        {
+            FilteredProducts = Products.Where(n => n.Name.Contains(name, StringComparison.InvariantCultureIgnoreCase)).ToList();
+        }
+        else{
+            FilteredProducts = Products;
+        }
+        _SearchText = name;
+    }
+
+    private string GetActiveClass(int CatId)
+    {
+        return CatId == _SelectedCategoryId ? "active" : String.Empty;
     }
 }
