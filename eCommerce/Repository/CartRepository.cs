@@ -24,13 +24,13 @@ namespace eCommerce.Repository
             return await _dbcontext.Cart.Where(u => u.UserId == UserId).Include(p=>p.Product).ToListAsync();
         }
 
-        async Task<bool> ICartRepository.UpdateCartAsync(string UserId, int ProductId, int Count)
+        public async Task<bool> UpdateCartAsync(string UserId, int ProductId, int Count)
         {
             if(string.IsNullOrWhiteSpace(UserId))
             {
                 return false;
             }
-            var CartInDb = await _dbcontext.Cart.FirstOrDefaultAsync(u => u.UserId == UserId);
+            var CartInDb = await _dbcontext.Cart.FirstOrDefaultAsync(u => u.UserId == UserId && u.ProductId==ProductId);
             if (CartInDb == null) {
                 var Cart = new Cart
                 {
@@ -42,7 +42,6 @@ namespace eCommerce.Repository
             }
             else
             {
-                CartInDb.ProductId = ProductId;
                 CartInDb.Count += Count;
                 if(CartInDb.Count <= 0)
                 {

@@ -1,7 +1,10 @@
 ﻿@page "/"
 @inject IProductRepository _ProductRepository
 @inject ICategoryRepository _CategoryRepository
-
+@inject ICartRepository _CartRepository
+@inject NavigationManager _NavigationManager
+@inject AuthenticationStateProvider _AuthenticationStateProvider
+@inject IJSRuntime _JSRuntime
 <PageTitle>Home</PageTitle>
 <style>
     .card-img-fixed {
@@ -92,7 +95,9 @@ else{
                                 <h5 class="card-title text-center lead text-success">@prod.Name</h5>
 
                                 <h4 class="text-center">
-                                    <i class="bi bi-cart3 btn btn-success text-right px-5 form-control">Add to cart</i>
+                                    <div class="m-lg-auto p-2" @onclick="()=>AddProductToCart(prod)">
+                                        <i class="bi bi-cart3 btn btn-success text-right px-5 form-control">Add to cart</i>
+                                    </div>
                                 </h4>
                                 @*   <p class="card-text mt-2">@((MarkupString)prod.Description)</p> *@
                             </div>
@@ -157,5 +162,28 @@ else{
     private string GetActiveClass(int CatId)
     {
         return CatId == _SelectedCategoryId ? "active" : String.Empty;
+    }
+
+
+    private async Task AddProductToCart(eCommerce.Data.Product product){
+        IsProcessing = true;
+        var AuthState = await _AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var User = AuthState.User;
+        var Authenticated = User.Identity is not null && User.Identity.IsAuthenticated;
+        if (!Authenticated)
+        {
+            await _JSRuntime.InvokeVoidAsync("eval", "window.location.href = '/Account/Login';");
+        }
+        else{
+            var Result = await _CartRepository.UpdateCartAsync(User.FindFirst(u => u.Type.Contains("nameidentifier"))?.Value, product.Id, 1);
+            if(Result)
+            {
+                await _JSRuntime.ToastrSuccess("Items Added to Cart");
+            }
+            else{
+                await _JSRuntime.ToastrError("Error adding items to cart");
+            }
+        }
+        IsProcessing = false;
     }
 }
