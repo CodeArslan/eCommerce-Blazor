@@ -3,8 +3,10 @@
 @using System.Globalization
 @using eCommerce.Utility
 @inject ICartRepository _CartRepository
+@inject IOrderRepository _OrderRepository
 @inject AuthenticationStateProvider _AuthenticationStateProvider
 @inject IJSRuntime _JSRuntime
+@inject NavigationManager _NavigationManager
 
 @attribute [Authorize]
 
@@ -171,6 +173,10 @@ else
 
     private async Task ProcessOrderCreation()
     {
-
+        IsProcessing = true;
+        await Task.Yield();
+        OrderHeader.OrderDetails = StaticDetails.ConvertShoppinCartListToOrderDetailList(Carts.ToList());
+        var Result = await _OrderRepository.CreateAsync(OrderHeader);
+        _NavigationManager.NavigateTo($"/Order/Confirmation/{Result.Id}");
     }
 }
