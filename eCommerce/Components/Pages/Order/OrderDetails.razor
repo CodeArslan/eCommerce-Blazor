@@ -1,0 +1,99 @@
+﻿ @page "/Order/Details/{id:int}"
+@using System.Globalization
+@using eCommerce.Utility
+
+@inject IOrderRepository _OrderRepository
+@inject IJSRuntime _JS
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+
+@if (IsProcessing)
+{
+    <div class="position-absolute w-100 vh-100 d-flex flex-column align-items-center bg-white justify-content-center">
+        <img src="/images/Loader.gif" alt="loading" />
+    </div>
+}
+else
+{
+    <div class="container my-5 mx-auto p-5 w-100" style="max-width: 950px;">
+        <div class="card" style="max-width: 750px;">
+            <hr />
+            <div class="pt-3 text-success text-center">
+                <span class="h4">ORDER DETAILS</span>
+            </div>
+            <div class="px-3">
+                <p>Order Id: @OrderHeader.Id</p>
+                <p>Name: @OrderHeader.Name</p>
+                <p>Email: @OrderHeader.Email</p>
+                <p>Phone: @OrderHeader.PhoneNumber</p>
+                <p>Order Status: @OrderHeader.Status</p>
+            </div>
+            <hr />
+            <div class="card-body">
+                <h4 class="text-success">Menu Items</h4>
+                @foreach (var item in OrderHeader.OrderDetails)
+                {
+                    <div class="d-flex">
+                        <div class="d-flex w-100 justify-content-between">
+                            <p>&nbsp; -- @item.ProductName</p>
+                            <p>@item.Price.ToString("C",CultureInfo.GetCultureInfo("en-us")) x @item.Count = </p>
+                        </div>
+                        <div class="ps-2">@((item.Price * item.Count).ToString("C", CultureInfo.GetCultureInfo("en-us")))</div>
+                    </div>
+                }
+               
+            </div>
+            <hr />
+            <h4 class="text-success text-end">@OrderHeader.GrandTotal.ToString("C", CultureInfo.GetCultureInfo("en-us"))</h4>
+            <hr />
+            <div class="row">
+                <div class="col-5">
+                    <a href="/Order/List" class="btn btn-secondary m-2 p-2" style="width:150px;">Back to Orders</a>
+                </div>
+                <div class="col-7 text-end">
+                    @if (OrderHeader.Status != StaticDetails.StatusCancelled && OrderHeader.Status != StaticDetails.StatusCompleted
+                   && AuthenticationStateProvider.GetAuthenticationStateAsync().GetAwaiter().GetResult().User.IsInRole(StaticDetails.Role_Admin)==true
+                    )
+                    {
+                        <button class="btn btn-danger m-2 p-2" @onclick="()=>UpdateStatus(StaticDetails.StatusCancelled)" style="width:150px;">Cancelled</button>
+                         @if (OrderHeader.Status == StaticDetails.StatusPending)
+                         {
+                            <button class="btn btn-primary m-2 p-2" @onclick="()=>UpdateStatus(StaticDetails.StatusReadyForPickup)" style="width:150px;">Ready for Pickup</button>
+                         }
+                        @if (OrderHeader.Status == StaticDetails.StatusReadyForPickup){
+                            <button class="btn btn-success m-2 p-2" @onclick="()=>UpdateStatus(StaticDetails.StatusCompleted)" style="width:150px;">Completed</button>
+                        }
+                    } 
+                   
+                </div>
+            </div>
+        </div>
+    </div>
+}
+@code {
+    [Parameter]
+    public int Id { get; set; }
+    public bool IsProcessing = true;
+
+    private OrderHeader? OrderHeader = null;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await LoadOrders(Id);
+            IsProcessing = false;
+            StateHasChanged();
+        }
+    }
+    private async Task LoadOrders(int Id)
+    {
+        OrderHeader = await _OrderRepository.GetAsync(Id);
+    }
+
+    private async Task UpdateStatus(string Status)
+    {
+        await _OrderRepository.UpdateStatusAsync(Id,Status);
+        _JS?.ToastrSuccess("Order Status Updated Successfully");
+    }
+}
