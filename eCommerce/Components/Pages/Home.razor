@@ -1,10 +1,14 @@
 ﻿@page "/"
+@using Services
+
 @inject IProductRepository _ProductRepository
 @inject ICategoryRepository _CategoryRepository
 @inject ICartRepository _CartRepository
 @inject NavigationManager _NavigationManager
 @inject AuthenticationStateProvider _AuthenticationStateProvider
 @inject IJSRuntime _JSRuntime
+@inject SharedStateService _SharedStateService
+
 <PageTitle>Home</PageTitle>
 <style>
     .card-img-fixed {
@@ -171,6 +175,7 @@ else{
         var AuthState = await _AuthenticationStateProvider.GetAuthenticationStateAsync();
         var User = AuthState.User;
         var Authenticated = User.Identity is not null && User.Identity.IsAuthenticated;
+        _SharedStateService.TotalCartCount = await _CartRepository.GetTotalCartCountAsync(User.FindFirst(u => u.Type.Contains("nameidentifier"))?.Value);
         if (!Authenticated)
         {
             await _JSRuntime.InvokeVoidAsync("eval", "window.location.href = '/Account/Login';");

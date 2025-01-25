@@ -2,6 +2,8 @@
 @using Microsoft.AspNetCore.Authorization
 @using System.Globalization
 @using eCommerce.Utility
+@using Services
+@inject SharedStateService _SharedStateService 
 @inject ICartRepository _CartRepository
 @inject IOrderRepository _OrderRepository
 @inject AuthenticationStateProvider _AuthenticationStateProvider
@@ -168,6 +170,7 @@ else
         var AuthState = await _AuthenticationStateProvider.GetAuthenticationStateAsync();
         var User = AuthState.User;
         var Result = await _CartRepository.UpdateCartAsync(OrderHeader.UserId, ProductId, Count);
+        _SharedStateService.TotalCartCount = await _CartRepository.GetTotalCartCountAsync(User.FindFirst(u => u.Type.Contains("nameidentifier"))?.Value);
         await LoadCart();
     }
 

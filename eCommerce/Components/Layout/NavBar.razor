@@ -1,7 +1,11 @@
-﻿<nav class="navbar navbar-expand-sm navbar-dark bg-black">
+﻿@using Services;
+@inject SharedStateService _SharedStateService
+@inject AuthenticationStateProvider _AuthenticationStateProvider
+@inject ICartRepository _CartRepository
+<nav class="navbar navbar-expand-sm navbar-dark bg-black">
     <div class="container-fluid">
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse"
-                aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
+        aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
 
@@ -15,7 +19,7 @@
                 </li>
                 <li class="">
                     <NavLink class="nav-link" href="/Cart">
-                        <span class="bi bi-cart3" aria-hidden="true"></span>Cart
+                        <span class="bi bi-cart3" aria-hidden="true"></span>Cart (@_SharedStateService.TotalCartCount)
                     </NavLink>
                 </li>
                 <li class="">
@@ -57,9 +61,34 @@
                         </li>
                     </NotAuthorized>
                 </AuthorizeView>
-                
-               
+
+
             </ul>
         </div>
     </div>
 </nav>
+@code{
+    protected override void OnInitialized()
+    {
+        _SharedStateService.OnChange += OnSharedStateChanged;
+        GetInitialCount();
+    }
+    private void OnSharedStateChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    public async Task GetInitialCount()
+    {
+        var AuthState = await _AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = AuthState.User;
+        if (user.Identity.IsAuthenticated)
+        {
+            _SharedStateService.TotalCartCount = await _CartRepository.GetTotalCartCountAsync(user?.FindFirst(u=>u.Type.Contains("nameidentifier"))?.Value);
+        }
+    }
+    public void Dispose()
+    {
+        _SharedStateService.OnChange -= OnSharedStateChanged;
+    }
+}
