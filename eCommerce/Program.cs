@@ -32,7 +32,17 @@ builder.Services.AddAuthentication(options =>
         options.DefaultScheme = IdentityConstants.ApplicationScheme;
         options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
     })
-    .AddIdentityCookies();
+    .AddFacebook(facebookOptions =>
+    {
+        facebookOptions.AppId = "619948340542968";
+        facebookOptions.AppSecret = "4b4881e435043799a40a5c594cc10e3c";
+    })
+    .AddGoogle(googleOptions =>
+    {
+        googleOptions.ClientId = "115360310888-3gsiibhp7k72i5o8tm1omcash81eivci.apps.googleusercontent.com";
+        googleOptions.ClientSecret = "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";
+    })
+.AddIdentityCookies();
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 builder.Services.AddDbContext<ApplicationDbContext>(options =>

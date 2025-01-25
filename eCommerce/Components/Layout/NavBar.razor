@@ -34,9 +34,11 @@
                 <AuthorizeView>
                     <Authorized>
                         <li class="nav-item">
+                            <NavLink class="nav-link p-2" href="Account/Manage">
                             <button class="nav-link active me-2" style="cursor:pointer; background:transparent; border:none;">
                                 Welcome, <span class="ms-1">@context?.User?.Identity?.Name</span>
                             </button>
+                            </NavLink>
                         </li>
                         <li class="">
                             <form action="Account/Logout" method="post">
