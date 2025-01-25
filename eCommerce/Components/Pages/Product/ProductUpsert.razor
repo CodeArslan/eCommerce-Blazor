@@ -16,7 +16,6 @@
 }
 else
 {
-
     <div class="card shadow border-0 m-4">
         <div class="card-header bg-black bg-gradient ml-0 py-3">
             <div class="row">
@@ -35,8 +34,21 @@ else
                         <ValidationMessage For="@(()=>Product.Name)" />
                     </div>
                     <div class="form-floating py-3 col-12">
-                        <InputText @bind-Value="Product.Description" class="form-control" id="Description" placeholder="Description" />
-                        <label for="Description">Description</label>
+                        <RadzenHtmlEditor @bind-Value=@Product.Description style="height: 300px;">
+                            <RadzenHtmlEditorUndo />
+                            <RadzenHtmlEditorRedo />
+                            <RadzenHtmlEditorSeparator />
+                            <RadzenHtmlEditorBold />
+                            <RadzenHtmlEditorItalic />
+                            <RadzenHtmlEditorUnderline />
+                            <RadzenHtmlEditorStrikeThrough />
+                            <RadzenHtmlEditorSeparator />
+                            <RadzenHtmlEditorColor />
+                            <RadzenHtmlEditorBackground />
+                            <RadzenHtmlEditorRemoveFormat />
+                        </RadzenHtmlEditor>
+                      @*   <InputText @bind-Value="Product.Description" class="form-control" id="Description" placeholder="Description" /> *@
+                      
                         <ValidationMessage For="@(()=>Product.Description)" />
                     </div>
                     <div class="form-floating py-3 col-12">
@@ -151,7 +163,7 @@ else
     {
         IsProcessing = true;
         var file = e.File;
-        FileInfo fileInfo = new FileInfo(file.Name);
+        System.IO.FileInfo fileInfo = new (file.Name);
         var NewFileName=$"{Guid.NewGuid()}.{fileInfo.Extension}";
         if(Directory.Exists(_DirectoryPath )){
             Directory.CreateDirectory(_DirectoryPath);

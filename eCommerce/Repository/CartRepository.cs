@@ -24,6 +24,17 @@ namespace eCommerce.Repository
             return await _dbcontext.Cart.Where(u => u.UserId == UserId).Include(p=>p.Product).ToListAsync();
         }
 
+        public async Task<int> GetTotalCartCountAsync(string? UserId)
+        {
+            int CartCount = 0;
+            var CartItems = await _dbcontext.Cart.Where(u => u.UserId == UserId).ToListAsync();
+            foreach (var CartItem in CartItems)
+            {
+                CartCount += CartItem.Count;
+            }
+            return CartCount;
+        }
+
         public async Task<bool> UpdateCartAsync(string UserId, int ProductId, int Count)
         {
             if(string.IsNullOrWhiteSpace(UserId))
