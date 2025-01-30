@@ -9,6 +9,7 @@
 @inject AuthenticationStateProvider _AuthenticationStateProvider
 @inject IJSRuntime _JSRuntime
 @inject NavigationManager _NavigationManager
+@inject PaymentService _PaymentService
 
 @attribute [Authorize]
 
@@ -179,7 +180,10 @@ else
         IsProcessing = true;
         await Task.Yield();
         OrderHeader.OrderDetails = StaticDetails.ConvertShoppinCartListToOrderDetailList(Carts.ToList());
+
+        var session = _PaymentService.CreateStripeCheckoutSession(OrderHeader);
+        OrderHeader.SessionId = session.Id;
         var Result = await _OrderRepository.CreateAsync(OrderHeader);
-        _NavigationManager.NavigateTo($"/Order/Confirmation/{Result.Id}");
+        _NavigationManager.NavigateTo(session.Url);
     }
 }

@@ -55,8 +55,8 @@ else
                    && AuthenticationStateProvider.GetAuthenticationStateAsync().GetAwaiter().GetResult().User.IsInRole(StaticDetails.Role_Admin)==true
                     )
                     {
-                        <button class="btn btn-danger m-2 p-2" @onclick="()=>UpdateStatus(StaticDetails.StatusCancelled)" style="width:150px;">Cancelled</button>
-                         @if (OrderHeader.Status == StaticDetails.StatusPending)
+                        <button class="btn btn-danger m-2 p-2" @onclick="()=>UpdateStatus(StaticDetails.StatusCancelled)" style="width:150px;">Cancel Order</button>
+                         @if (OrderHeader.Status == StaticDetails.StatusApproved)
                          {
                             <button class="btn btn-primary m-2 p-2" @onclick="()=>UpdateStatus(StaticDetails.StatusReadyForPickup)" style="width:150px;">Ready for Pickup</button>
                          }
@@ -93,7 +93,7 @@ else
 
     private async Task UpdateStatus(string Status)
     {
-        await _OrderRepository.UpdateStatusAsync(Id,Status);
+        await _OrderRepository.UpdateStatusAsync(Id,Status,"");
         _JS?.ToastrSuccess("Order Status Updated Successfully");
     }
 }

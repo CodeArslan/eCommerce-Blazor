@@ -33,6 +33,8 @@ namespace eCommerce.Data
 
         public ICollection<OrderDetails> OrderDetails { get; set; } = new List<OrderDetails>();
 
+        public string? SessionId { get; set; }
+        public string? PaymentIntentId { get; set; }
 
     }
 }
