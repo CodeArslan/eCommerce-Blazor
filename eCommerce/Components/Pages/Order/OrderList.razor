@@ -25,28 +25,29 @@ else
         <div class="card-body p-4">
             @if (OrderHeader.Any())
             {
+                <!-- Search input field -->
+                <div class="d-flex justify-content-end mb-3">
+                    <RadzenTextBox @bind-Value="searchText" Placeholder="Search..." Style="width: 35%;" />
+                </div>
+
                 <RadzenDataGrid AllowFiltering="true" AllowColumnResize="true" AllowAlternatingRows="false" FilterMode="FilterMode.Advanced" AllowSorting="true" PageSize="5" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
-                                Data="@OrderHeader" ColumnWidth="300px" LogicalFilterOperator="LogicalFilterOperator.Or" SelectionMode="DataGridSelectionMode.Single">
+                                Data="@FilteredOrders" ColumnWidth="300px" LogicalFilterOperator="LogicalFilterOperator.Or" SelectionMode="DataGridSelectionMode.Single">
                     <Columns>
-                        <RadzenDataGridColumn Property="Id" Filterable="false" Title="ID" Frozen="true" Width="80px"/>
+                        <RadzenDataGridColumn Property="Id" Filterable="false" Title="ID" Frozen="true" Width="80px" />
                         <RadzenDataGridColumn Property="Name" Title="Name" Frozen="true" Width="100px" />
                         <RadzenDataGridColumn Property="PhoneNumber" Title="Phone Number" Width="110px" />
                         <RadzenDataGridColumn Property="Email" Title="Email" Width="150px" />
                         <RadzenDataGridColumn Property="GrandTotal" Title="Grand Total" FormatString="{0:C}" Width="120px" />
                         <RadzenDataGridColumn Property="OrderDate" Title="Order Date" FormatString="{0:d}" Width="120px" />
                         <RadzenDataGridColumn Property="Status" Title="Status" Width="100px" />
-                        <RadzenDataGridColumn Title="Action" Sortable="false" Filterable="false" Width="100px" TextAlign="TextAlign.Center">
+                        <RadzenDataGridColumn Title="Action" Sortable="false" Filterable="false" Width="110px" TextAlign="TextAlign.Center">
                             <Template Context="OrderHeader">
-                                <RadzenButton Shade="Shade.Lighter" Text="Details" ButtonStyle="ButtonStyle.Primary" Click="@(()=>_NavigationManager.NavigateTo($"Order/Details/{OrderHeader.Id}"))"></RadzenButton>
+                                <RadzenButton Shade="Shade.Lighter" Text="Details" ButtonStyle="ButtonStyle.Primary" Click="@(() => _NavigationManager.NavigateTo($"Order/Details/{OrderHeader.Id}"))"></RadzenButton>
                             </Template>
                         </RadzenDataGridColumn>
                     </Columns>
                 </RadzenDataGrid>
-
-
-               
             }
-
         </div>
     </div>
 }
@@ -56,10 +57,17 @@ else
     private IEnumerable<OrderHeader> OrderHeader { get; set; } = new List<OrderHeader>();
     [CascadingParameter]
     public Task<AuthenticationState> AuthenticationState { get; set; }
-
+    private string searchText = string.Empty;
     private bool? IsAdmin { get; set; }
     private string? UserId { get; set; }
-
+    private IEnumerable<OrderHeader> FilteredOrders => OrderHeader
+        .Where(order =>
+            order.Name.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+            order.PhoneNumber.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+            order.Email.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+            order.Status.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+            order.GrandTotal.ToString().Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+            order.OrderDate.ToString("d").Contains(searchText, StringComparison.OrdinalIgnoreCase));
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
