@@ -1,7 +1,42 @@
 ﻿@using eCommerce.Utility
 @inherits LayoutComponentBase
 @inject AuthenticationStateProvider AuthenticationStateProvider
-<div class="page">
+
+<RadzenLayout>
+   
+    <RadzenHeader Style="background-color:black" >
+        <RadzenStack class="p-2" Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" Gap="20px">
+            @if (_NavbarVisibility)
+            {
+                <NavBar />
+            }
+            else{
+                <RadzenSidebarToggle Click="@(() => sidebarExpanded = !sidebarExpanded)" />
+            }
+        </RadzenStack>
+    </RadzenHeader>
+
+    <!-- Sidebar -->
+     <AuthorizeView Roles="@StaticDetails.Role_Admin">
+        <RadzenSidebar Responsive="false" Style="width: max-content">
+            <RadzenPanelMenu DisplayStyle="@(sidebarExpanded ? MenuItemDisplayStyle.IconAndText : MenuItemDisplayStyle.Icon)" ShowArrow="false">
+                <NavMenu />
+            </RadzenPanelMenu>
+        </RadzenSidebar>
+     </AuthorizeView>
+  
+
+    <!-- Body -->
+    <RadzenBody class="p-0">
+        <div>
+            @Body
+        </div>
+    </RadzenBody>
+</RadzenLayout>
+
+
+
+@* <div class="page">
 
     <AuthorizeView Roles="@StaticDetails.Role_Admin">
         <div class="sidebar">
@@ -18,9 +53,9 @@
             <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
         </div> *@
 
-            @Body
+@*             @Body
     </main>
-</div>
+</div> *@
 
 <div id="blazor-error-ui" data-nosnippet>
     An unhandled error has occurred.
@@ -28,6 +63,7 @@
     <span class="dismiss">🗙</span>
 </div>
 @code{
+    bool sidebarExpanded = true;
     private bool _NavbarVisibility;
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {

@@ -2,13 +2,38 @@
 
 @inject NavigationManager NavigationManager
 
-<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">eCommerce</a>
-    </div>
-</div>
 
-<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+
+
+        <RadzenPanelMenuItem Text="Home" Icon="home" Click="@(() => NavigationManager.NavigateTo("/"))" />
+        <RadzenPanelMenuItem Text="Category" Icon="list" Click="@(() => NavigationManager.NavigateTo("Category"))" />
+        <RadzenPanelMenuItem Text="Product" Icon="shopping_bag" Click="@(() => NavigationManager.NavigateTo("Product"))" />
+        <RadzenPanelMenuItem Text="Cart" Icon="shopping_cart" Click="@(() => NavigationManager.NavigateTo("Cart"))" />
+        <RadzenPanelMenuItem Text="Orders" Icon="assignment" Click="@(() => NavigationManager.NavigateTo("/Order/List"))" />
+        <RadzenPanelMenuItem Text="Auth Required" Icon="lock" Click="@(() => NavigationManager.NavigateTo("auth"))" />
+
+        <AuthorizeView>
+            <Authorized>
+                <RadzenPanelMenuItem Text="@context.User.Identity?.Name" Icon="person" Click="@(() => NavigationManager.NavigateTo("Account/Manage"))" />
+        <RadzenPanelMenuItem Text="Logout" >
+            <Template>
+                <form action="Account/Logout" method="post">
+                    <AntiforgeryToken />
+                    <input type="hidden" name="ReturnUrl" value="" />
+                    <RadzenButton ButtonType="ButtonType.Submit" Icon="exit_to_app" />
+                </form>
+            </Template>
+        </RadzenPanelMenuItem>
+
+            </Authorized>
+            <NotAuthorized>
+                <RadzenPanelMenuItem Text="Register" Icon="person_add" Click="@(() => NavigationManager.NavigateTo("Account/Register"))" />
+                <RadzenPanelMenuItem Text="Login" Icon="login" Click="@(() => NavigationManager.NavigateTo("Account/Login"))" />
+            </NotAuthorized>
+        </AuthorizeView>
+ 
+
+@* <input type="checkbox" title="Navigation menu" class="navbar-toggler" />
 
 <div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
     <nav class="nav flex-column">
@@ -77,7 +102,7 @@
             </NotAuthorized>
         </AuthorizeView>
     </nav>
-</div>
+</div> *@
 
 @code {
     private string? currentUrl;

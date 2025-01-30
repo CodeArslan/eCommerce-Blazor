@@ -2,7 +2,42 @@
 @inject SharedStateService _SharedStateService
 @inject AuthenticationStateProvider _AuthenticationStateProvider
 @inject ICartRepository _CartRepository
-<nav class="navbar navbar-expand-sm navbar-dark bg-black">
+@inject NavigationManager Navigation
+
+
+<!-- Left-aligned Navbar Links -->
+<RadzenStack Orientation="Orientation.Horizontal" Gap="20px">
+    <RadzenButton Variant="Variant.Flat" Text="Home" Icon="home" Class="text-white" Click="@(() => Navigation.NavigateTo("/"))" />
+    <RadzenButton Variant="Variant.Flat" Text=@($"Cart ({_SharedStateService.TotalCartCount})") Icon="shopping_cart" Class="text-white" Click="@(() => Navigation.NavigateTo("/Cart"))" />
+    <RadzenButton Variant="Variant.Flat" Text="Orders" Icon="assignment" Class="text-white" Click="@(() => Navigation.NavigateTo("/Order/List"))" />
+</RadzenStack>
+
+<!-- Right-aligned Navbar Items -->
+<AuthorizeView>
+    <Authorized>
+        <RadzenStack Orientation="Orientation.Horizontal" Gap="20px" AlignItems="AlignItems.Center">
+            <RadzenButton Variant="Variant.Flat" Text="@welcomeText" Icon="account_circle" Class="text-white" Click="@(() => Navigation.NavigateTo("/Account/Manage"))" />
+            <form action="Account/Logout" method="post" style="display: inline;">
+                <AntiforgeryToken />
+                <input type="hidden" name="ReturnUrl" value="" />
+                <button type="submit" style="background: none; border: none; color: white; cursor: pointer;">
+                    <RadzenIcon Icon="logout" Style="margin-right: 5px;" />
+                    Logout
+                </button>
+            </form>
+        </RadzenStack>
+    </Authorized>
+    <NotAuthorized>
+        <RadzenStack Orientation="Orientation.Horizontal" Gap="20px">
+            <RadzenLink Variant="Variant.Flat" Text="Register" Icon="person_add" Class="text-white" Path="Account/Register"/>
+            <RadzenLink Variant="Variant.Flat" Text="Login" Icon="login" Class="text-white" Path="Account/Login" />
+        </RadzenStack>
+    </NotAuthorized>
+</AuthorizeView>
+
+
+
+@* <nav class="navbar navbar-expand-sm navbar-dark bg-black">
     <div class="container-fluid">
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse"
         aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
@@ -68,8 +103,9 @@
             </ul>
         </div>
     </div>
-</nav>
+</nav> *@
 @code{
+    private string welcomeText { get; set; } 
     protected override void OnInitialized()
     {
         _SharedStateService.OnChange += OnSharedStateChanged;
@@ -84,6 +120,7 @@
     {
         var AuthState = await _AuthenticationStateProvider.GetAuthenticationStateAsync();
         var user = AuthState.User;
+        welcomeText = user.Identity?.Name != null ? $"Welcome, {user.Identity.Name}!" : "Welcome!";
         if (user.Identity.IsAuthenticated)
         {
             _SharedStateService.TotalCartCount = await _CartRepository.GetTotalCartCountAsync(user?.FindFirst(u=>u.Type.Contains("nameidentifier"))?.Value);
