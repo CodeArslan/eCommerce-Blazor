@@ -20,6 +20,7 @@ else
             </div>
         </div>
         <div class="card-body p-4">
+            
             <RadzenDataGrid @ref="categoryGrid" GridLines="DataGridGridLines.Both" PagerHorizontalAlign="HorizontalAlign.Left" AllowAlternatingRows="true" AllowFiltering="true" AllowPaging="true" PageSize="5" AllowSorting="true" EditMode="@editMode"
                             Data="@categories" TItem="Category" RowUpdate="@OnUpdateRow" RowCreate="@OnCreateRow" Sort="@Reset" Page="@Reset" Filter="@Reset" ColumnWidth="200px">
                 <HeaderTemplate>
@@ -95,7 +96,7 @@ else
                     Severity = NotificationSeverity.Success,
                     Summary = "Success",
                     Detail = "Category Deleted Successfully",
-                    Duration = 2000000
+                    Duration = 2000
                 });
             else
             NotificationService.Notify(new NotificationMessage

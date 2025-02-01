@@ -2,6 +2,10 @@
 @using System.Globalization
 @inject IProductRepository _ProductRepository
 @inject IJSRuntime _JS
+@inject NavigationManager NavigationManager
+@inject DialogService DialogService
+@inject NotificationService NotificationService
+
 <BootstrapModal OnModalConfirmation="ConfirmDelete_Click"
 BootstrapButtonType="btn-danger"
 ButtonText="Delete"
@@ -26,11 +30,47 @@ else
         </div>
         <div class="card-body p-4">
             <div class="row pb-3">
-                <div class="col-12 text-end">
-                    <a href="Product/Create" class="btn btn-secondary btn-lg"><i class="bi bi-plus-square"></i> Add</a>
+                <div class="col-4">
+                    <RadzenButton Click="NavigateToCreate" Text="Add New" Icon="add_circle" ButtonStyle="ButtonStyle.Primary" />
+                </div>
+                <div class="col-8 d-flex justify-content-end">
+                    <RadzenTextBox @bind-Value="searchText" Placeholder="Search..." Style="width: 65%;" />
                 </div>
             </div>
-            @if(Products.Any())
+            <RadzenDataGrid SelectionMode="DataGridSelectionMode.Single" Data="@FilteredProducts" AllowFiltering="true" GridLines="DataGridGridLines.Both" AllowColumnResize="true" AllowSorting="true"
+                            PageSize="5" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left"
+                            ShowPagingSummary="true" ColumnWidth="300px" Style="margin: 20px 0" @bind-Value=@selectedProducts>
+                <EmptyTemplate>
+                    <p style="color: lightgrey; font-size: 24px; text-align: center; margin: 2rem;">No records to display.</p>
+                </EmptyTemplate>
+                <Columns>
+                    <RadzenDataGridColumn Property="Name" Title="Name" Width="200px" />
+                    <RadzenDataGridColumn Property="Price" Title="Price" Width="150px">
+                        <Template Context="pro">
+                            @pro.Price.ToString("C", CultureInfo.GetCultureInfo("en-US"))
+                        </Template>
+                    </RadzenDataGridColumn>
+
+                    <RadzenDataGridColumn Property="SpecialTag" Title="Special Tag" Width="150px" />
+                    <RadzenDataGridColumn Property="Category.Name" Title="Category" Width="200px" />
+                    <RadzenDataGridColumn Width="100px" Filterable="false" Sortable="false" TextAlign="TextAlign.Right" Frozen="true" FrozenPosition="FrozenColumnPosition.Right">
+                        <Template Context="data">
+                                <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light"
+                                                          Variant="Variant.Flat" Size="ButtonSize.Medium" 
+                                                          class="rz-my-1 rz-ms-1"
+                                              Click="@(() => NavigateToEdit(data.Id))" />
+                                <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger"
+                                                            Variant="Variant.Flat" 
+                                                            Size="ButtonSize.Medium" 
+                                                            Shade="Shade.Lighter"
+                                                            class="rz-my-1 rz-ms-1"
+                                                             Click="@(() => HandleDelete(data.Id))" />
+                            
+                        </Template>
+                    </RadzenDataGridColumn>
+                </Columns>
+            </RadzenDataGrid>
+     @*        @if(Products.Any())
             {
                 <table class="table table-bordered table-striped">
                     <thead>
@@ -58,7 +98,7 @@ else
                         }
                     </tbody>
                 </table>
-            }
+            } *@
 
         </div>
     </div>
@@ -66,10 +106,29 @@ else
 
 @code {
     public bool IsProcessing = true;
+    private string searchText { get; set; } = "";
     private IEnumerable<Product> Products { get; set; } = new List<Product>();
     private int ProductCategoryId { get; set; } = 0;
 
-   
+    IList<Product> selectedProducts;
+    private IEnumerable<Product> FilteredProducts => string.IsNullOrWhiteSpace(searchText)
+      ? Products
+      : Products.Where(p =>
+          (!string.IsNullOrEmpty(p.Name) && p.Name.Contains(searchText, StringComparison.OrdinalIgnoreCase)) ||
+          (!string.IsNullOrEmpty(p.SpecialTag) && p.SpecialTag.Contains(searchText, StringComparison.OrdinalIgnoreCase)) ||
+          (!string.IsNullOrEmpty(p.Category?.Name) && p.Category.Name.Contains(searchText, StringComparison.OrdinalIgnoreCase)) ||
+          p.Price.ToString().Contains(searchText)
+      );
+
+    private void NavigateToCreate()
+    {
+        NavigationManager.NavigateTo("Product/Create");
+    }
+
+    void NavigateToEdit(int productId)
+    {
+        NavigationManager.NavigateTo($"Product/Update/{productId}");
+    }
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if(firstRender)
@@ -82,29 +141,59 @@ else
     private async Task LoadProducts()
     {
         Products = await _ProductRepository.GetAllAsync();
+        selectedProducts = new List<Product>() { Products.FirstOrDefault() };
     }
 
-    private void HandleDelete(int Id)
+    private async Task HandleDelete(int Id)
     {
+        // ProductCategoryId = Id;
+        // _JS.InvokeVoidAsync("ShowConfirmationModal");
         ProductCategoryId = Id;
-        _JS.InvokeVoidAsync("ShowConfirmationModal");
+
+        // Show Radzen confirmation dialog
+        var confirmed = await DialogService.Confirm(
+            "Are you sure you want to delete this product?",
+            "Confirm Delete",
+            new ConfirmOptions { OkButtonText = "Yes", CancelButtonText = "No" }
+        );
+
+        if (confirmed == true)
+        {
+            await ConfirmDelete_Click(true);
+        }
     }
 
     private async Task ConfirmDelete_Click(bool IsConfirmed)
     {
         IsProcessing = true;
-        await _JS.InvokeVoidAsync("HideConfirmationModal");
+
         if (IsConfirmed && ProductCategoryId != 0)
         {
             var result = await _ProductRepository.DeleteAsync(ProductCategoryId);
-            if(result)
-                _JS?.ToastrSuccess("Category Deleted Succesfully");
+            if (result)
+                NotificationService.Notify(new NotificationMessage
+                    {
+                        Style = "width:auto;margin-top:-80px",
+                        Severity = NotificationSeverity.Success,
+                        Summary = "Success",
+                        Detail = "Product Deleted Successfully",
+                        Duration = 2000
+                    });
             else
-                _JS?.ToastrError("Category Deleted Succesfully");
+                NotificationService.Notify(new NotificationMessage
+                    {
+                        Style = "width:auto;margin-top:-80px",
+                        Severity = NotificationSeverity.Error,
+                        Summary = "Error",
+                        Detail = "Product Deletion Failed",
+                        Duration = 2000
+                    });
 
-                await LoadProducts();
+            await LoadProducts();
         }
+
         ProductCategoryId = 0;
         IsProcessing = false;
     }
+
 }
