@@ -5,7 +5,7 @@
 @inject IOrderRepository _OrderRepository
 @inject IJSRuntime _JS
 @inject AuthenticationStateProvider AuthenticationStateProvider
-
+@inject NotificationService NotificationService
 
 @if (IsProcessing)
 {
@@ -55,13 +55,14 @@ else
                    && AuthenticationStateProvider.GetAuthenticationStateAsync().GetAwaiter().GetResult().User.IsInRole(StaticDetails.Role_Admin)==true
                     )
                     {
-                        <button class="btn btn-danger m-2 p-2" @onclick="()=>UpdateStatus(StaticDetails.StatusCancelled)" style="width:150px;">Cancel Order</button>
+                        <RadzenButton ButtonStyle="ButtonStyle.Danger" Variant="Variant.Filled" class="m-2 p-2" Click="() => UpdateStatus(StaticDetails.StatusCancelled)" style="width:150px;">Cancel Order</RadzenButton>
+
                          @if (OrderHeader.Status == StaticDetails.StatusApproved)
                          {
-                            <button class="btn btn-primary m-2 p-2" @onclick="()=>UpdateStatus(StaticDetails.StatusReadyForPickup)" style="width:150px;">Ready for Pickup</button>
+                            <RadzenButton ButtonStyle="ButtonStyle.Success" Variant="Variant.Filled" class="m-2 p-2" Click="()=>UpdateStatus(StaticDetails.StatusReadyForPickup)" style="width:200px;">Ready for Pickup</RadzenButton>
                          }
                         @if (OrderHeader.Status == StaticDetails.StatusReadyForPickup){
-                            <button class="btn btn-success m-2 p-2" @onclick="()=>UpdateStatus(StaticDetails.StatusCompleted)" style="width:150px;">Completed</button>
+                            <RadzenButton ButtonStyle="ButtonStyle.Info" Variant="Variant.Filled" class="m-2 p-2" Click="()=>UpdateStatus(StaticDetails.StatusCompleted)" style="width:150px;">Completed</RadzenButton>
                         }
                     } 
                    
@@ -94,6 +95,13 @@ else
     private async Task UpdateStatus(string Status)
     {
         await _OrderRepository.UpdateStatusAsync(Id,Status,"");
-        _JS?.ToastrSuccess("Order Status Updated Successfully");
+        NotificationService.Notify(new NotificationMessage
+            {
+                Style = "width:auto;margin-top:-80px",
+                Severity = NotificationSeverity.Success,
+                Summary = "Success",
+                Detail = "Order Status Updated Successfully",
+                Duration = 2000
+            });
     }
 }
