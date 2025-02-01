@@ -13,8 +13,18 @@ namespace eCommerce.Repository
         }
         public async Task<OrderHeader> CreateAsync(OrderHeader orderHeader)
         {
+
            orderHeader.OrderDate = DateTime.Now;
-           await _dbcontext.OrderHeader.AddAsync(orderHeader);
+            foreach (var detail in orderHeader.OrderDetails)
+            {
+                
+                if (detail.Product != null)
+                {
+                    detail.ProductId = detail.Product.Id;
+                    detail.Product = null; 
+                }
+            }
+            await _dbcontext.OrderHeader.AddAsync(orderHeader);
            await _dbcontext.SaveChangesAsync();
            return orderHeader;
         }

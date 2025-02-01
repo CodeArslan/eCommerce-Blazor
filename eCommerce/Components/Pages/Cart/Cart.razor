@@ -24,94 +24,126 @@ else
 {
     @if (Carts.Any())
     {
-        <div class="row w-100">
+        <div class="row w-100 m-1">
             <div class="col-lg-6 col-12">
-                <div class="container p-4 m-2">
-                    <h4 class="text-center text-success display-6">
+                <RadzenCard Style="margin: 1rem 0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); height: 435px; overflow-y: auto;">
+                    <RadzenText TextStyle="TextStyle.H5" Class="rz-text-center rz-mb-4" Style="color: #2e7d32; border-bottom: 2px solid #e0e0e0; padding-bottom: 1rem;">
                         Cart Summary
-                    </h4>
+                    </RadzenText>
                     @foreach (var Item in Carts)
                     {
-                        <div class="d-flex p-2 m-2">
-                            <div class="card flex-row w-100">
-                                <img class="card-img-left" style="width: 120px;" src="@(Item.Product.ImageUrl ?? "/images/products/default.jpg")">
-                                <div class="card-body">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <h4>
-                                            @Item.Product.Name
-                                        </h4>
-                                        <h4>
-                                            @Item.Product.Price.ToString("C", CultureInfo.GetCultureInfo("en-us"))
-                                        </h4>
-                                    </div>
-                                    <div class="flex-fill">
-                                        <h4 class="text-danger">@((Item.Product.Price * Item.Count).ToString("C", CultureInfo.GetCultureInfo("en-us")))</h4>
-                                    </div>
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div class="d-flex justify-content-between gap-2">
-                                            <span @onclick="()=>UpdateCartItem(Item.ProductId,-1)">
-                                                <i class="bi bi-dash-circle-fill btn text-secondary"></i>
-                                            </span>
-                                            <span class="mx-2">
-                                                <b class="lead">@Item.Count</b>
-                                            </span>
-                                            <span @onclick="()=>UpdateCartItem(Item.ProductId,1)">
-                                                <i class="bi bi-plus-circle-fill btn text-secondary"></i>
-                                            </span>
-                                        </div>
-                                        <button @onclick="()=>UpdateCartItem(Item.ProductId,-10000)" class="btn btn-danger">Remove</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    }
+                        <RadzenCard Class="rz-mb-4" Style="border-left: 4px solid #4CAF50; transition: all 0.3s ease;" HoverStyle="transform: translateX(8px);">
+                            <RadzenStack Orientation="Orientation.Horizontal" Gap="1.5rem">
+                                <RadzenImage Path="@(Item.Product.ImageUrl ?? "/images/products/default.jpg")"
+                                             Style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px;" />
 
-                </div>
+                                <RadzenStack Orientation="Orientation.Vertical" Class="rz-flex-grow-1">
+                                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
+                                        <RadzenText TextStyle="TextStyle.Subtitle1" Style="font-weight: 600; color: #37474f;">
+                                            @Item.Product.Name
+                                        </RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Body2" Style="color: #78909c;">
+                                            @Item.Product.Price.ToString("C", CultureInfo.GetCultureInfo("en-us"))
+                                        </RadzenText>
+                                    </RadzenStack>
+
+                                    <RadzenText TextStyle="TextStyle.Body1" Style="color: #d32f2f; font-weight: 700;">
+                                        Total: @((Item.Product.Price * Item.Count).ToString("C", CultureInfo.GetCultureInfo("en-us")))
+                                    </RadzenText>
+
+                                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
+                                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                                            <RadzenButton ButtonStyle="ButtonStyle.Secondary"
+                                                          Icon="remove"
+                                                          Click="@(() => UpdateCartItem(Item.ProductId, -1))"
+                                                          Variant="Variant.Text"
+                                                          Style="color: #607d8b;" />
+
+                                            <RadzenText TextStyle="TextStyle.Body1" Style="min-width: 30px; text-align: center; font-weight: 600;">
+                                                @Item.Count
+                                            </RadzenText>
+
+                                            <RadzenButton ButtonStyle="ButtonStyle.Secondary"
+                                                          Icon="Add"
+                                                          Click="@(() => UpdateCartItem(Item.ProductId, 1))"
+                                                          Variant="Variant.Text"
+                                                          Style="color: #607d8b;" />
+                                        </RadzenStack>
+
+                                        <RadzenButton Text="Remove"
+                                                      ButtonStyle="ButtonStyle.Danger"
+                                                      Click="@(() => UpdateCartItem(Item.ProductId, -10000))"
+                                                      Variant="Variant.Outlined"
+                                                      Icon="delete" />
+                                    </RadzenStack>
+                                </RadzenStack>
+                            </RadzenStack>
+                        </RadzenCard>
+                    }
+                </RadzenCard>
             </div>
 
             <div class="col-lg-6 col-12">
-                <div class="card mt-2">
-                    <div class="card-header text-success text-center display-6">
+                <RadzenCard Style="margin-top: 1rem; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); height: 435px;">
+                    <RadzenText TextStyle="TextStyle.H5" Class="rz-text-center rz-mb-4" Style="color: #2e7d32; border-bottom: 2px solid #e0e0e0; padding-bottom: 1rem;">
                         Pickup Details
-                    </div>
+                    </RadzenText>
+
                     <EditForm Model="OrderHeader" FormName="CartForm" OnValidSubmit="ProcessOrderCreation">
-                        <DataAnnotationsValidator/>
-                        <div class="card-body">
+                        <DataAnnotationsValidator />
+                        <RadzenStack Orientation="Orientation.Vertical" Gap="1.5rem">
+                            <!-- Name and Phone in one row -->
+                            <RadzenRow>
+                                <RadzenColumn Size="6">
+                                    <RadzenFormField Text="Name" Style="width: 100%;">
+                                        <RadzenTextBox @bind-Value="OrderHeader.Name" Style="width: 100%" />
+                                    </RadzenFormField>
+                                    <ValidationMessage For="@(() => OrderHeader.Name)" Class="rz-color-danger" />
+                                </RadzenColumn>
+                                <RadzenColumn Size="6">
+                                    <RadzenFormField Text="Phone" Style="width: 100%;">
+                                        <RadzenTextBox @bind-Value="OrderHeader.PhoneNumber" Style="width: 100%" />
+                                    </RadzenFormField>
+                                    <ValidationMessage For="@(() => OrderHeader.PhoneNumber)" Class="rz-color-danger" />
+                                </RadzenColumn>
+                            </RadzenRow>
 
-                            <div class="form-group">
-                                <label for="name">Name</label>
-                                <InputText @bind-Value="OrderHeader.Name" type="text" id="name" class="form-control" />
-                                <ValidationMessage For="@(() => OrderHeader.Name)" />
-                            </div>
-                            <div class="form-group">
-                                <label for="email">Email</label>
-                                <InputText @bind-Value="OrderHeader.Email" type="text" id="email" class="form-control" />
-                                <ValidationMessage For="@(() => OrderHeader.Email)" />
-                            </div>
-                            <div class="form-group">
-                                <label for="phone">Phone</label>
-                                <InputText @bind-Value="OrderHeader.PhoneNumber" type="text" id="phone" class="form-control" />
-                                <ValidationMessage For="@(() => OrderHeader.PhoneNumber)" />
-                            </div>
+                            <!-- Email in the next row -->
+                            <RadzenRow>
+                                <RadzenColumn Size="12">
+                                    <RadzenFormField Text="Email" Style="width: 100%;">
+                                        <RadzenTextBox @bind-Value="OrderHeader.Email" Style="width: 100%" />
+                                    </RadzenFormField>
+                                    <ValidationMessage For="@(() => OrderHeader.Email)" Class="rz-color-danger" />
+                                </RadzenColumn>
+                            </RadzenRow>
 
-                            <div class="card mt-4 bg-light">
-                                <div class="card-body">
-                                    <h4>
+                            <!-- Grand Total and Items in Cart -->
+                            <RadzenCard Style="background-color: #f8f9fa; border-left: 4px solid #4CAF50; margin: 0.5rem 0;">
+                                <RadzenStack Orientation="Orientation.Vertical">
+                                    <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 600; color: #37474f;">
                                         Grand Total: @OrderHeader.GrandTotal.ToString("C", CultureInfo.GetCultureInfo("en-us"))
-                                    </h4>
-                                    <h4>
-                                        No. of Items: @TotalItems
-                                    </h4>
-                                </div>
-                            </div>
-                        </div>
-                        <button type="submit" class="btn btn-success m-4">
-                            Looks Good? Place Order!
-                        </button>
+                                    </RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Body2" Style="color: #78909c;">
+                                        Items in Cart: @TotalItems
+                                    </RadzenText>
+                                </RadzenStack>
+                            </RadzenCard>
+
+                            <!-- Submit Button -->
+                            <RadzenButton ButtonType="ButtonType.Submit"
+                                          Text="Looks Good? Place Order!"
+                                          Icon="check_circle"
+                                          ButtonStyle="ButtonStyle.Success"
+                                          Variant="Variant.Filled"
+                                          Style="width: 100%; padding: 1rem; font-weight: 600;"
+                                          HoverStyle="transform: translateY(-1px); box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);" />
+                        </RadzenStack>
                     </EditForm>
-                </div>
+                </RadzenCard>
             </div>
         </div>
+    
     }
     else{
         <div class="p-4">
