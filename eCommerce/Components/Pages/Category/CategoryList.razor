@@ -1,12 +1,8 @@
 ﻿@page "/Category"
 @inject ICategoryRepository _CategoryRepository
 @inject IJSRuntime _JS
-<BootstrapModal OnModalConfirmation="ConfirmDelete_Click"
-    BootstrapButtonType="btn-danger"
-    ButtonText="Delete"
-    Title="Are you sure you want to delete catgeory?"
->
-</BootstrapModal>
+@inject NavigationManager _NavigationManager
+@inject NotificationService NotificationService
 @if (IsProcessing)
 {
     <div class="position-absolute w-75 h-75 d-flex flex-column align-items-center bg-white justify-content-center">
@@ -15,8 +11,8 @@
 }
 else
 {
-    <div class="card shadow border-0 m-4">
-        <div class="card-header bg-black bg-gradient ml-0 py-3">
+    <div class="card shadow border-0 m-2">
+        <div class="card-header bg-black bg-gradient ml-0 py-2">
             <div class="row">
                 <div class="col-12 text-center">
                     <h2 class="text-white py-2">Category List</h2>
@@ -24,34 +20,36 @@ else
             </div>
         </div>
         <div class="card-body p-4">
-            <div class="row pb-3">
-                <div class="col-12 text-end">
-                    <a href="Category/Create" class="btn btn-secondary btn-lg"><i class="bi bi-plus-square"></i> Add</a>
-                </div>
-            </div>
-            @if(Categories.Any())
-            {
-                <table class="table table-bordered table-striped">
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach(var cat in Categories)
-                        {
-                            <tr>
-                                <td>@cat.Name</td>
-                                <td>
-                                    <a href="@($"Category/Update/{cat.Id}")" class="btn btn-primary"><i class="bi bi-pencil-square"></i> Edit</a>
-                                    <button class="btn btn-danger" @onclick="()=>HandleDelete(cat.Id)"><i class="bi bi-pencil-square"></i> Delete</button>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            }
+            <RadzenDataGrid @ref="categoryGrid" GridLines="DataGridGridLines.Both" PagerHorizontalAlign="HorizontalAlign.Left" AllowAlternatingRows="true" AllowFiltering="true" AllowPaging="true" PageSize="5" AllowSorting="true" EditMode="@editMode"
+                            Data="@categories" TItem="Category" RowUpdate="@OnUpdateRow" RowCreate="@OnCreateRow" Sort="@Reset" Page="@Reset" Filter="@Reset" ColumnWidth="200px">
+                <HeaderTemplate>
+                    <RadzenButton ButtonStyle="ButtonStyle.Success" Icon="add_circle" Text="Add New Order" Click="@InsertRow" Disabled="@(editMode == DataGridEditMode.Single && CategoriesToInsert.Count() > 0)" />
+                </HeaderTemplate>
+                <EmptyTemplate>
+                    <p style="color: lightgrey; font-size: 24px; text-align: center; margin: 2rem;">No records to display.</p>
+                </EmptyTemplate>
+                <Columns>
+                    <RadzenDataGridColumn Property="@nameof(Category.Id)" Title="Id"></RadzenDataGridColumn>
+                    <RadzenDataGridColumn Property="@nameof(Category.Name)" Title="Name">
+                        <EditTemplate Context="Category">
+                            <RadzenTextBox @bind-Value="Category.Name" Style="width:200px; display: block" Name="Name" aria-label="Enter Category Name" Placeholder="Name" />
+                            <RadzenRequiredValidator Text="Name is required" Component="Name" Popup="true" />
+                        </EditTemplate>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn Context="Category" Filterable="false" Sortable="false" TextAlign="TextAlign.Right" Frozen="true" FrozenPosition="FrozenColumnPosition.Right">
+                        <Template Context="Category">
+                            <RadzenButton Icon="add_circle" ButtonStyle="ButtonStyle.Success" Variant="Variant.Flat" Size="ButtonSize.Medium" Shade="Shade.Lighter" Click="@(() => InsertAfterRow(Category))" title="Add new row after this row" Disabled="@(editMode == DataGridEditMode.Single && CategoriesToInsert.Count() > 0)" />
+                            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium" class="rz-my-1 rz-ms-1" Click="@(args => EditRow(Category))" @onclick:stopPropagation="true" />
+                            <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Variant="Variant.Flat" Size="ButtonSize.Medium" Shade="Shade.Lighter" class="rz-my-1 rz-ms-1" Click="@(args => HandleDelete(Category.Id))" @onclick:stopPropagation="true" />
+                        </Template>
+                        <EditTemplate Context="Category">
+                            <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Variant="Variant.Flat" Size="ButtonSize.Medium" Click="@((args) => SaveRow(Category))" aria-label="Save" />
+                            <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium" class="rz-my-1 rz-ms-1" Click="@((args) => CancelEdit(Category))" aria-label="Cancel" />
+                            <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Variant="Variant.Flat" Size="ButtonSize.Medium" Shade="Shade.Lighter" class="rz-my-1 rz-ms-1" Click="@(args => HandleDelete(Category.Id))" aria-label="Delete" />
+                        </EditTemplate>
+                    </RadzenDataGridColumn>
+                </Columns>
+            </RadzenDataGrid>
 
         </div>
     </div>
@@ -59,8 +57,15 @@ else
 
 @code {
     public bool IsProcessing = true;
-    private IEnumerable<Category> Categories { get; set; } = new List<Category>();
     private int DeleteCategoryId { get; set; } = 0;
+
+    RadzenDataGrid<Category> categoryGrid;
+    DataGridEditMode editMode = DataGridEditMode.Single;
+    IEnumerable<Category> categories;
+    List<Category> CategoriesToInsert = new List<Category>();
+    List<Category> CategoriesToUpdate = new List<Category>();
+
+
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -73,13 +78,38 @@ else
     }
     private async Task LoadCategories()
     {
-        Categories = await _CategoryRepository.GetAllAsync();
+        categories = await _CategoryRepository.GetAllAsync();
     }
 
-    private void HandleDelete(int Id)
+    private async Task HandleDelete(int Id)
     {
         DeleteCategoryId = Id;
-        _JS.InvokeVoidAsync("ShowConfirmationModal");
+        IsProcessing = true;
+        if (DeleteCategoryId != 0)
+        {
+            var result = await _CategoryRepository.DeleteAsync(DeleteCategoryId);
+            if (result)
+            NotificationService.Notify(new NotificationMessage
+                {
+                    Style = "width:auto;margin-top:-80px",
+                    Severity = NotificationSeverity.Success,
+                    Summary = "Success",
+                    Detail = "Category Deleted Successfully",
+                    Duration = 2000000
+                });
+            else
+            NotificationService.Notify(new NotificationMessage
+                {
+                    Style = "width:auto;margin-top:-80px",
+                    Severity = NotificationSeverity.Error,
+                    Summary = "Error",
+                    Detail = "Category Deletion Failed",
+                    Duration = 2000
+                });
+            await LoadCategories();
+        }
+        DeleteCategoryId = 0;
+        IsProcessing = false;
     }
 
     private async Task ConfirmDelete_Click(bool IsConfirmed)
@@ -99,4 +129,116 @@ else
         DeleteCategoryId = 0;
         IsProcessing = false;
     }
+    private void NavigateToCategoryUpdate(int categoryId)
+    {
+        _NavigationManager.NavigateTo($"Category/Update/{categoryId}");
+    }
+
+
+    //Data Grid CRUD
+    void Reset()
+    {
+        CategoriesToInsert.Clear();
+        CategoriesToUpdate.Clear();
+    }
+
+    void Reset(Category category)
+    {
+        CategoriesToInsert.Remove(category);
+        CategoriesToUpdate.Remove(category);
+    }
+
+    async Task EditRow(Category category)
+    {
+        if (!categoryGrid.IsValid) return;
+
+        if (editMode == DataGridEditMode.Single)
+        {
+            Reset();
+        }
+
+        CategoriesToUpdate.Add(category);
+        await categoryGrid.EditRow(category);
+    }
+    void OnUpdateRow(Category category)
+    {
+        Reset(category);
+        _CategoryRepository.UpdateAsync(category);
+        NotificationService.Notify(new NotificationMessage
+            {
+                Style = "width:auto;margin-top:-80px",
+                Severity = NotificationSeverity.Success,
+                Summary = "Success",
+                Detail = "Category updated Successfully",
+                Duration = 2000
+            });
+        LoadCategories();
+    }
+    async Task SaveRow(Category category)
+    {
+        await categoryGrid.UpdateRow(category);
+    }
+
+    void CancelEdit(Category category)
+    {
+        Reset(category);
+
+        categoryGrid.CancelEditRow(category);
+    }
+    async Task InsertRow()
+    {
+        if (!categoryGrid.IsValid) return;
+
+        if (editMode == DataGridEditMode.Single)
+        {
+            Reset();
+        }
+
+        var category = new Category();
+        CategoriesToInsert.Add(category);
+        await categoryGrid.InsertRow(category);
+    }
+    async Task InsertAfterRow(Category row)
+    {
+        if (!categoryGrid.IsValid) return;
+
+        if (editMode == DataGridEditMode.Single)
+        {
+            Reset();
+        }
+
+        var category = new Category();
+        CategoriesToInsert.Add(category);
+        await categoryGrid.InsertAfterRow(category, row);
+    }
+
+    void OnCreateRow(Category category)
+    {
+        _CategoryRepository.CreateAsync(category);
+        NotificationService.Notify(new NotificationMessage
+            {
+                Style = "width:auto;margin-top:-80px",
+                Severity = NotificationSeverity.Success,
+                Summary = "Success",
+                Detail = "Category added Successfully",
+                Duration = 2000
+            });
+        LoadCategories();
+        CategoriesToInsert.Remove(category);
+    }
+
+
+    // private string searchText = string.Empty;
+
+    // private IEnumerable<Category> FilteredCategories => categories
+    //     .Where(category =>
+    //         category.Name.Contains(searchText, StringComparison.OrdinalIgnoreCase));
+    // private async Task OnSearchTextChanged(string value)
+    // {
+    //     searchText = value;
+    //     if (categoryGrid != null)
+    //     {
+    //         await categoryGrid.Reload();
+    //     }
+    // }
 }
