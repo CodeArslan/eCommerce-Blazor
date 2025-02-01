@@ -5,36 +5,108 @@
 @inject NavigationManager Navigation
 
 
-<!-- Left-aligned Navbar Links -->
-<RadzenStack Orientation="Orientation.Horizontal" Gap="20px">
-    <RadzenButton Variant="Variant.Flat" Text="Home" Icon="home" Class="text-white" Click="@(() => Navigation.NavigateTo("/"))" />
-    <RadzenButton Variant="Variant.Flat" Text=@($"Cart ({_SharedStateService.TotalCartCount})") Icon="shopping_cart" Class="text-white" Click="@(() => Navigation.NavigateTo("/Cart"))" />
-    <RadzenButton Variant="Variant.Flat" Text="Orders" Icon="assignment" Class="text-white" Click="@(() => Navigation.NavigateTo("/Order/List"))" />
-</RadzenStack>
+<style>
+    .awesome-navbar {
+        background: linear-gradient(135deg, #2b5876 0%, #4e4376 100%);
+        padding: 0.8rem 2rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
 
-<!-- Right-aligned Navbar Items -->
-<AuthorizeView>
-    <Authorized>
-        <RadzenStack Orientation="Orientation.Horizontal" Gap="20px" AlignItems="AlignItems.Center">
-            <RadzenButton Variant="Variant.Flat" Text="@welcomeText" Icon="account_circle" Class="text-white" Click="@(() => Navigation.NavigateTo("/Account/Manage"))" />
-            <form action="Account/Logout" method="post" style="display: inline;">
-                <AntiforgeryToken />
-                <input type="hidden" name="ReturnUrl" value="" />
-                <button type="submit" style="background: none; border: none; color: white; cursor: pointer;">
-                    <RadzenIcon Icon="logout" Style="margin-right: 5px;" />
+    .nav-button {
+        transition: all 0.3s ease;
+        border-radius: 8px;
+        padding: 0.8rem 1.5rem !important;
+        border: 1px solid rgba(255,255,255,0.1) !important;
+    }
+
+        .nav-button:hover {
+            background: rgba(255,255,255,0.1) !important;
+            transform: translateY(-2px);
+            box-shadow: 0 3px 12px rgba(0,0,0,0.2);
+        }
+
+    .cart-count {
+        background: #ff4757;
+        padding: 2px 8px;
+        border-radius: 20px;
+        font-size: 0.8em;
+        margin-left: 8px;
+    }
+
+    .user-greeting {
+        font-weight: 500;
+        margin-right: 1rem;
+        color: #fff !important;
+    }
+
+    #logout-button {
+        transition: all 0.3s ease;
+        background: rgba(255,255,255,0.08) !important;
+        border-radius: 8px;
+        padding: 0.5rem 1rem;
+    }
+
+        #logout-button:hover {
+            background: rgba(255,255,255,0.15) !important;
+        }
+</style>
+
+    <!-- Left-aligned Navbar Links -->
+    <RadzenStack Orientation="Orientation.Horizontal" Gap="16px">
+        <RadzenButton Variant="Variant.Flat" Class="nav-button text-white" Click="@(() => Navigation.NavigateTo("/"))">
+            <RadzenIcon Icon="home" Style="margin-right: 8px;" />
+            <span>Home</span>
+        </RadzenButton>
+
+        <RadzenButton Variant="Variant.Flat" Class="nav-button text-white" Click="@(() => Navigation.NavigateTo("/Cart"))">
+            <RadzenIcon Icon="shopping_cart" Style="margin-right: 8px;" />
+            <span>Cart</span>
+            <span class="cart-count">@_SharedStateService.TotalCartCount</span>
+        </RadzenButton>
+
+        <RadzenButton Variant="Variant.Flat" Class="nav-button text-white" Click="@(() => Navigation.NavigateTo("/Order/List"))">
+            <RadzenIcon Icon="assignment" Style="margin-right: 8px;" />
+            <span>Orders</span>
+        </RadzenButton>
+    </RadzenStack>
+
+    <!-- Right-aligned Navbar Items -->
+    <AuthorizeView>
+        <Authorized>
+            <RadzenStack Orientation="Orientation.Horizontal" Gap="24px" AlignItems="AlignItems.Center">
+                <RadzenButton Variant="Variant.Text" Class="text-white user-greeting" Click="@(() => Navigation.NavigateTo("/Account/Manage"))">
+                    <RadzenIcon Icon="account_circle" Style="margin-right: 8px;" />
+                    @welcomeText
+                </RadzenButton>
+
+                <form action="Account/Logout" method="post" class="logout-button">
+                    <AntiforgeryToken />
+                    <input type="hidden" name="ReturnUrl" value="" />
+               @*  <RadzenButton ButtonType="ButtonType.Submit" Variant="Variant.Flat" class="text-white" style="background:none; border:none; cursor:pointer;">
+                    <RadzenIcon Icon="logout" Style="margin-right: 8px;" />
+                    <span>Logout</span>
+                </RadzenButton> *@
+
+                    <RadzenButton ButtonType="ButtonType.Submit" id="logoutbutton" class="text-white" style="background:none; border:none; cursor:pointer;">
+                        <RadzenIcon Icon="logout" Style="margin-right: 8px;" />
                     Logout
-                </button>
-            </form>
-        </RadzenStack>
-    </Authorized>
-    <NotAuthorized>
-        <RadzenStack Orientation="Orientation.Horizontal" Gap="20px">
-            <RadzenLink Variant="Variant.Flat" Text="Register" Icon="person_add" Class="text-white" Path="Account/Register"/>
-            <RadzenLink Variant="Variant.Flat" Text="Login" Icon="login" Class="text-white" Path="Account/Login" />
-        </RadzenStack>
-    </NotAuthorized>
-</AuthorizeView>
-
+                    </RadzenButton>
+                </form>
+            </RadzenStack>
+        </Authorized>
+        <NotAuthorized>
+            <RadzenStack Orientation="Orientation.Horizontal" Gap="16px">
+                <RadzenLink Class="nav-button text-white" Path="Account/Register">
+                    <RadzenIcon Icon="person_add" Style="margin-right: 8px;" />
+                    Register
+                </RadzenLink>
+                <RadzenLink Class="nav-button text-white" Path="Account/Login">
+                    <RadzenIcon Icon="login" Style="margin-right: 8px;" />
+                    Login
+                </RadzenLink>
+            </RadzenStack>
+        </NotAuthorized>
+    </AuthorizeView>
 
 
 @* <nav class="navbar navbar-expand-sm navbar-dark bg-black">
