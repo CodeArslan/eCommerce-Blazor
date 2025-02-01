@@ -30,17 +30,20 @@ else
                     <RadzenTextBox @bind-Value="searchText" Placeholder="Search..." Style="width: 35%;" />
                 </div>
 
-                <RadzenDataGrid AllowFiltering="true" AllowColumnResize="true" AllowAlternatingRows="false" FilterMode="FilterMode.Advanced" AllowSorting="true" PageSize="5" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
-                                Data="@FilteredOrders" ColumnWidth="300px" LogicalFilterOperator="LogicalFilterOperator.Or" SelectionMode="DataGridSelectionMode.Single">
-                    <Columns>
-                        <RadzenDataGridColumn Property="Id" Filterable="false" Title="ID" Frozen="true" Width="80px" />
-                        <RadzenDataGridColumn Property="Name" Title="Name" Frozen="true" Width="100px" />
-                        <RadzenDataGridColumn Property="PhoneNumber" Title="Phone Number" Width="110px" />
+                <RadzenDataGrid GridLines="DataGridGridLines.Both" AllowFiltering="true" AllowColumnResize="true" AllowAlternatingRows="false" FilterMode="FilterMode.Advanced" AllowSorting="true" PageSize="5" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
+                                Data="@FilteredOrders" ColumnWidth="140px" LogicalFilterOperator="LogicalFilterOperator.Or" SelectionMode="DataGridSelectionMode.Single" @bind-Value=@selectedOrders>
+                    <EmptyTemplate>
+                        <p style="color: lightgrey; font-size: 24px; text-align: center; margin: 2rem;">No records to display.</p>
+                    </EmptyTemplate>
+                                <Columns>
+                        <RadzenDataGridColumn Property="Id" Filterable="false" Title="ID" Frozen="true" Width="80px" FrozenPosition="FrozenColumnPosition.Left" />
+                        <RadzenDataGridColumn Property="Name" Title="Name" Frozen="true" FrozenPosition="FrozenColumnPosition.Left" />
+                        <RadzenDataGridColumn Property="PhoneNumber" Title="Phone Number" />
                         <RadzenDataGridColumn Property="Email" Title="Email" Width="150px" />
-                        <RadzenDataGridColumn Property="GrandTotal" Title="Grand Total" FormatString="{0:C}" Width="120px" />
-                        <RadzenDataGridColumn Property="OrderDate" Title="Order Date" FormatString="{0:d}" Width="120px" />
-                        <RadzenDataGridColumn Property="Status" Title="Status" Width="100px" />
-                        <RadzenDataGridColumn Title="Action" Sortable="false" Filterable="false" Width="110px" TextAlign="TextAlign.Center">
+                        <RadzenDataGridColumn Property="GrandTotal" Title="Grand Total" FormatString="{0:C}" />
+                        <RadzenDataGridColumn Property="OrderDate" Title="Order Date" FormatString="{0:d}" />
+                        <RadzenDataGridColumn Property="Status" Title="Status" />
+                        <RadzenDataGridColumn Title="Action" Sortable="false" Filterable="false" TextAlign="TextAlign.Center" Frozen="true" FrozenPosition="FrozenColumnPosition.Right">
                             <Template Context="OrderHeader">
                                 <RadzenButton Shade="Shade.Lighter" Text="Details" ButtonStyle="ButtonStyle.Primary" Click="@(() => _NavigationManager.NavigateTo($"Order/Details/{OrderHeader.Id}"))"></RadzenButton>
                             </Template>
@@ -55,6 +58,7 @@ else
 @code {
     public bool IsProcessing = true;
     private IEnumerable<OrderHeader> OrderHeader { get; set; } = new List<OrderHeader>();
+    IList<OrderHeader> selectedOrders;
     [CascadingParameter]
     public Task<AuthenticationState> AuthenticationState { get; set; }
     private string searchText = string.Empty;
@@ -90,6 +94,7 @@ else
         {
             OrderHeader = await _OrderRepository.GetAllAsync(UserId);
         }
+        selectedOrders = new List<OrderHeader>() { OrderHeader.FirstOrDefault() };
         IsProcessing = false;
     }
 

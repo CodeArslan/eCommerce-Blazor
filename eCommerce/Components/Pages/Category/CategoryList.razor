@@ -22,9 +22,9 @@ else
         <div class="card-body p-4">
             
             <RadzenDataGrid @ref="categoryGrid" GridLines="DataGridGridLines.Both" PagerHorizontalAlign="HorizontalAlign.Left" AllowAlternatingRows="true" AllowFiltering="true" AllowPaging="true" PageSize="5" AllowSorting="true" EditMode="@editMode"
-                            Data="@categories" TItem="Category" RowUpdate="@OnUpdateRow" RowCreate="@OnCreateRow" Sort="@Reset" Page="@Reset" Filter="@Reset" ColumnWidth="200px">
+                            Data="@categories" TItem="Category" RowUpdate="@OnUpdateRow" RowCreate="@OnCreateRow" Sort="@Reset" Page="@Reset" Filter="@Reset" ColumnWidth="200px" >
                 <HeaderTemplate>
-                    <RadzenButton ButtonStyle="ButtonStyle.Success" Icon="add_circle" Text="Add New Order" Click="@InsertRow" Disabled="@(editMode == DataGridEditMode.Single && CategoriesToInsert.Count() > 0)" />
+                    <RadzenButton ButtonStyle="ButtonStyle.Success" Icon="add_circle" Text="Add New Category" Click="@InsertRow" Disabled="@(editMode == DataGridEditMode.Single && CategoriesToInsert.Count() > 0)" />
                 </HeaderTemplate>
                 <EmptyTemplate>
                     <p style="color: lightgrey; font-size: 24px; text-align: center; margin: 2rem;">No records to display.</p>
